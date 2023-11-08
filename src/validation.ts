@@ -56,21 +56,28 @@ const validateFormatBlocks = (formatBlocks: any): ValidationResult => {
         return checkIsArray(format.changes);
       }
       for (const change of format.changes) {
-        // 文字列中の関数名をすべて取得して配列にする
-        for (const func of change.cssValue.match(/.\(.*\)/g) || []) {
-          // 関数名を取得する
-          const funcName = func.split("(")[0];
-          // 関数名が受け入れられているかどうかをチェックする
-          if (accept_funcs.includes(funcName)) {
-            continue;
-          } else {
-            return {
-              isValid: false,
-              message: `css function name ${funcName} is not accepted`,
-            };
-          }
+        if (!checkCssValue(change.cssValue).isValid) {
+          return checkCssValue(change.cssValue);
         }
       }
+    }
+  }
+  return { isValid: true, message: "" };
+};
+
+const checkCssValue = (cssValue: string): ValidationResult => {
+  // 文字列中の関数名をすべて取得して配列にする
+  for (const func of cssValue.matchAll(/(?<![a-z])[a-z]+\s*\(/g) || []) {
+    // 関数名を取得する
+    const funcName = func[0].split("(")[0].trim();
+    // 関数名が受け入れられているかどうかをチェックする
+    if (accept_funcs.includes(funcName)) {
+      continue;
+    } else {
+      return {
+        isValid: false,
+        message: `css function name ${funcName} is not accepted`,
+      };
     }
   }
   return { isValid: true, message: "" };
