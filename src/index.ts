@@ -1,3 +1,8 @@
+import { exit } from "node:process";
+import test from "node:test";
+import { validateRequestJson } from "./validation";
+import { TESTCASE } from "./testcase";
+
 console.log("start script");
 
 const Ajv = require("ajv");
@@ -22,6 +27,15 @@ const postFormatSchema = {
   ],
 };
 
+const formatBlocksSchema = {
+  type: "object",
+  properties: {
+    type: { type: "string" },
+    content: { type: "array" },
+  },
+  required: ["type", "content"],
+};
+
 const request = {
   body: {
     userId: "123",
@@ -33,7 +47,34 @@ const request = {
   },
 };
 
-const jsonParsed = JSON.parse(JSON.stringify(request.body));
 const ajv = new Ajv();
 
-const valid = ajv.validate(postFormatSchema, jsonParsed);
+// format_validation.jsonを読み込む
+const fs = require("fs");
+const json = fs.readFileSync("./format_validation.json", "utf8");
+const formatValidationFormat = {
+  type: "object",
+  properties: {
+    accept_func: { type: "array" },
+  },
+  required: ["accept_func"],
+};
+const formatValidation = JSON.parse(json);
+if (!ajv.validate(formatValidationFormat, formatValidation)) {
+  console.error("format_validation.json is invalid");
+  process.exit(1);
+}
+const funcRegex = /^.*\(.*\)$/;
+
+let count = 0;
+// testcaseを回す
+TESTCASE.forEach((tc) => {
+  if (validateRequestJson(JSON.stringify(tc)).isValid !== tc.expected) {
+    console.error("testcase" + count + "failed: validateRequestJson");
+    console.error(validateRequestJson(JSON.stringify(tc)).message);
+    exit(0);
+  } else {
+    console.log("testcase" + count + "passed");
+  }
+  count++;
+});
