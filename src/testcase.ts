@@ -1,3 +1,19 @@
+import { validateRequestJson } from "./validator";
+export const validatorTest = () => {
+  console.log("start validatorTest");
+  let count = 0;
+  TESTCASE.forEach((tc) => {
+    if (validateRequestJson(JSON.stringify(tc)).isValid !== tc.expected) {
+      console.error("testcase" + count + "failed: validateRequestJson");
+      console.error(validateRequestJson(JSON.stringify(tc)).message);
+    } else {
+      console.log("testcase" + count + "passed");
+    }
+    count++;
+  });
+  console.log("end validatorTest");
+};
+
 export const TESTCASE = [
   {
     userId: "123",
